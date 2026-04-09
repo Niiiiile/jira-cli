@@ -1,0 +1,32 @@
+{
+  "name": "iw-jira-cli",
+  "version": "0.5.0",
+  "description": "Jira Cloud REST API v3 CLI — issue search/create/update, comments, transitions, and agent-friendly compact output",
+  "type": "module",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "README.md",
+    ".env.example"
+  ],
+  "bin": {
+    "iw-jira-cli": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "prepare": "npm run build"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "incur": "^0.3.13"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
