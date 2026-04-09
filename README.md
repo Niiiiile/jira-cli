@@ -54,19 +54,19 @@
 ### Run with npx
 
 ```bash
-npx iw-jira-cli@latest
+npx @niiiiiiile/iw-jira-cli@latest
 ```
 
 ### Install globally
 
 ```bash
-npm install -g iw-jira-cli
+npm install -g @niiiiiiile/iw-jira-cli
 ```
 
 ### Run from source
 
 ```bash
-git clone https://github.com/your-org/iw-jira-cli.git
+git clone https://github.com/Niiiiile/jira-cli.git
 cd iw-jira-cli
 npm install
 npm run build
@@ -140,17 +140,17 @@ iw-jira-cli whoami
 ## Usage
 
 ```bash
-npx iw-jira-cli@latest --help
+npx @niiiiiiile/iw-jira-cli@latest --help
 ```
 
 ### Show an issue
 
 ```bash
 # キーで取得（show は issue get の短縮）
-npx iw-jira-cli@latest show PROJECT-123
+npx @niiiiiiile/iw-jira-cli@latest show PROJECT-123
 
 # URL でも指定可
-npx iw-jira-cli@latest show https://your-company.atlassian.net/browse/PROJECT-123
+npx @niiiiiiile/iw-jira-cli@latest show https://your-company.atlassian.net/browse/PROJECT-123
 ```
 
 グローバルインストール済みの場合は `iw-jira-cli` コマンドとして呼び出せます。
