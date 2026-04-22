@@ -1,5 +1,5 @@
 import { Cli, z } from 'incur'
-import { plainTextFromAdf } from './adf.js'
+import { adfToMarkdown } from './adf.js'
 import { descriptionToAdf } from './adf-mentions.js'
 import { resolveCredentials, type JiraCredentials } from './config.js'
 import { ISSUE_DETAIL_FIELDS, ISSUE_LIST_FIELDS } from './issue-fields.js'
@@ -507,7 +507,7 @@ export const issueCli = Cli.create('issue', {
             typeof co.body === 'string'
               ? co.body.trim()
               : co.body != null && typeof co.body === 'object'
-                ? plainTextFromAdf(co.body).trim()
+                ? adfToMarkdown(co.body).trim()
                 : '',
         })),
       }

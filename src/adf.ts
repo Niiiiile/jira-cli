@@ -1,4 +1,12 @@
-/** Atlassian Document Format からプレーンテキストを抽出（簡易） */
+import { adfToMarkdown } from './adf-to-md.js'
+import { markdownToAdf, markdownToAdfSync } from './md-to-adf.js'
+
+/**
+ * ADF ノードからプレーンテキストを抽出する簡易関数。書式は落ちる。
+ *
+ * 書式（Markdown）を保持したい場合は {@link adfToMarkdown} を使うこと。
+ * 互換のため残してある。
+ */
 export function plainTextFromAdf(node: unknown): string {
   if (node == null) return ''
   if (typeof node !== 'object') return ''
@@ -18,16 +26,14 @@ export function plainTextFromAdf(node: unknown): string {
   return inner.join('\n')
 }
 
-/** 1 行でも複数行でも ADF doc に変換（課題の description 用） */
+/**
+ * Markdown 文字列（またはプレーンテキスト）を ADF doc に変換する。
+ * `@[...]` メンションは解決せず placeholder として残る。
+ *
+ * メンションも解決したい場合は {@link markdownToAdf} を使用すること。
+ */
 export function plainTextToAdfBody(text: string): Record<string, unknown> {
-  const lines = text.split(/\r?\n/)
-  const content = lines.map((line) => ({
-    type: 'paragraph',
-    content: line.length ? [{ type: 'text', text: line }] : [],
-  }))
-  return {
-    type: 'doc',
-    version: 1,
-    content: content.length ? content : [{ type: 'paragraph', content: [] }],
-  }
+  return markdownToAdfSync(text)
 }
+
+export { adfToMarkdown, markdownToAdf, markdownToAdfSync }

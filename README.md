@@ -29,6 +29,7 @@
   + [User search](#user-search)
   + [Project list](#project-list)
 * [Output format](#output-format)
+* [Markdown support](#markdown-support)
 * [Mention syntax](#mention-syntax)
 * [Development](#development)
 * [License](#license)
@@ -47,6 +48,7 @@
 - `setup` / `profile` による接続情報管理
 - 認証ユーザー情報の取得（`whoami`, `myself`）
 - メンション記法: `@[accountId]` または `@[email:user@example.com]`
+- 説明・コメントの **Markdown 入出力**（書き込み時は ADF に、読み出し時は Markdown にラウンドトリップ）
 - パイプ・非 TTY 時の自動コンパクト出力（`JIRA_CLI_COMPACT` で制御可能）
 
 ## Installation
@@ -246,6 +248,43 @@ JIRA_CLI_COMPACT=1 iw-jira-cli issue search PROJECT
 
 # 強制的にフル出力
 JIRA_CLI_COMPACT=0 iw-jira-cli issue search PROJECT
+```
+
+## Markdown support
+
+`issue create` / `issue update` の `--description`、`issue comment` の `--body` は **Markdown として解釈**され、Jira の ADF（Atlassian Document Format）に変換されて投稿されます。`issue get` / `show` / `issue comments` で取得した description / コメントは逆に ADF から Markdown に変換されて出力されるため、Jira Web UI とターミナル双方で書式が保たれます。
+
+対応している記法:
+
+| 記法 | 例 |
+|------|------|
+| 見出し | `# H1`, `## H2`, ... `###### H6` |
+| 太字 / 斜体 | `**bold**`, `*italic*`, `__bold__`, `_italic_` |
+| 取り消し線 | `~~strike~~` |
+| 行内コード | `` `code` `` |
+| コードブロック | ` ```ts ` ... ` ``` ` |
+| 箇条書き | `- item` / `* item` |
+| 番号付きリスト | `1. item` |
+| チェックリスト | `- [ ] todo` / `- [x] done` |
+| 引用 | `> quote` |
+| 水平線 | `---` / `***` / `___` |
+| リンク | `[text](https://example.com)` |
+| 画像 | `![alt](https://example.com/img.png)`（リンクとして挿入） |
+| メンション | `@[accountId]` / `@[email:user@example.com]` |
+
+```bash
+iw-jira-cli issue comment PROJECT-123 --body "$(cat <<'EOF'
+## 調査結果
+
+- **影響範囲**: `UserController`
+- 修正方針は [PR #42](https://github.com/org/repo/pull/42) を参照
+- @[email:reviewer@example.com] レビューお願いします
+
+```bash
+php artisan test --filter UserControllerTest
+```
+EOF
+)"
 ```
 
 ## Mention syntax

@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer'
-import { plainTextFromAdf } from './adf.js'
+import { adfToMarkdown } from './adf.js'
 import type { JiraCredentials } from './config.js'
 import { normalizeJiraBaseUrl } from './jira-env.js'
 
@@ -78,7 +78,7 @@ export type IssueSummary = {
   reporter: string | null
   issuetype: string
   priority: string | null
-  /** description を ADF から抜いたテキスト（無ければ null） */
+  /** description を ADF から Markdown に変換した文字列（無ければ null） */
   description: string | null
   created: string | null
   updated: string | null
@@ -98,7 +98,7 @@ export function toIssueSummary(raw: {
   const descRaw = f.description
   const description =
     descRaw != null && typeof descRaw === 'object'
-      ? plainTextFromAdf(descRaw).trim() || null
+      ? adfToMarkdown(descRaw).trim() || null
       : null
   const parent =
     f.parent?.key != null
