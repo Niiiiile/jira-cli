@@ -184,6 +184,18 @@ export const issueCli = Cli.create('issue', {
         .string()
         .optional()
         .describe('期日（YYYY-MM-DD）'),
+      'story-points': z
+        .string()
+        .optional()
+        .describe(
+          'Story Points（数値）。デフォルトで customfield_10038 にマップ。env JIRA_STORY_POINTS_FIELD で上書き可',
+        ),
+      'fields-json': z
+        .string()
+        .optional()
+        .describe(
+          '任意フィールドを JSON で上書き（例: \'{"customfield_10100":{"value":"Low"},"customfield_10038":3}\'）',
+        ),
       ...authOptions.shape,
     }),
     output: z.any(),
@@ -216,6 +228,27 @@ export const issueCli = Cli.create('issue', {
       }
       if (c.options['due-date'] !== undefined && c.options['due-date'].length > 0) {
         fields.duedate = c.options['due-date']
+      }
+      if (c.options['story-points'] !== undefined && c.options['story-points'].length > 0) {
+        const fieldId = process.env.JIRA_STORY_POINTS_FIELD || 'customfield_10038'
+        const raw = c.options['story-points']
+        const num = Number(raw)
+        if (Number.isNaN(num)) {
+          throw new Error(`--story-points は数値で指定してください: "${raw}"`)
+        }
+        fields[fieldId] = num
+      }
+      if (c.options['fields-json'] !== undefined && c.options['fields-json'].length > 0) {
+        let extra: unknown
+        try {
+          extra = JSON.parse(c.options['fields-json'])
+        } catch (e) {
+          throw new Error(`--fields-json が正しい JSON ではありません: ${(e as Error).message}`)
+        }
+        if (typeof extra !== 'object' || extra === null || Array.isArray(extra)) {
+          throw new Error('--fields-json は JSON オブジェクトで指定してください')
+        }
+        Object.assign(fields, extra as Record<string, unknown>)
       }
       const created = await jiraRequest<{ key: string; id: string; self: string }>(
         creds,
@@ -264,6 +297,18 @@ export const issueCli = Cli.create('issue', {
         .string()
         .optional()
         .describe('期日（YYYY-MM-DD。"none" でクリア）'),
+      'story-points': z
+        .string()
+        .optional()
+        .describe(
+          'Story Points（数値。"none" でクリア）。デフォルトで customfield_10038 にマップ。env JIRA_STORY_POINTS_FIELD で上書き可',
+        ),
+      'fields-json': z
+        .string()
+        .optional()
+        .describe(
+          '任意フィールドを JSON で上書き（例: \'{"customfield_10100":{"value":"Low"}}\'、null を含められる）',
+        ),
       ...authOptions.shape,
     }),
     output: z.any(),
@@ -310,6 +355,30 @@ export const issueCli = Cli.create('issue', {
       }
       if (c.options['due-date'] !== undefined) {
         fields.duedate = c.options['due-date'] === 'none' ? null : c.options['due-date']
+      }
+      if (c.options['story-points'] !== undefined) {
+        const fieldId = process.env.JIRA_STORY_POINTS_FIELD || 'customfield_10038'
+        if (c.options['story-points'] === 'none') {
+          fields[fieldId] = null
+        } else {
+          const num = Number(c.options['story-points'])
+          if (Number.isNaN(num)) {
+            throw new Error(`--story-points は数値で指定してください: "${c.options['story-points']}"`)
+          }
+          fields[fieldId] = num
+        }
+      }
+      if (c.options['fields-json'] !== undefined && c.options['fields-json'].length > 0) {
+        let extra: unknown
+        try {
+          extra = JSON.parse(c.options['fields-json'])
+        } catch (e) {
+          throw new Error(`--fields-json が正しい JSON ではありません: ${(e as Error).message}`)
+        }
+        if (typeof extra !== 'object' || extra === null || Array.isArray(extra)) {
+          throw new Error('--fields-json は JSON オブジェクトで指定してください')
+        }
+        Object.assign(fields, extra as Record<string, unknown>)
       }
 
       if (Object.keys(fields).length === 0) {
