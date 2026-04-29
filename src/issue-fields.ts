@@ -18,4 +18,5 @@ export const ISSUE_DETAIL_FIELDS = [
   'description',
   'components',
   'duedate',
+  'attachment',
 ] as const

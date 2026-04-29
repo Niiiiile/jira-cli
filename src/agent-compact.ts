@@ -17,8 +17,16 @@ export function truncateText(s: string, max: number): string {
   return `${t.slice(0, max - 1)}…`
 }
 
-/** エージェント向け: id/self を落とし、空フィールド省略、説明は切り詰め */
-export function slimIssue(i: IssueSummary): Record<string, unknown> {
+export type SlimIssueOptions = {
+  /** true の場合、description を切り詰めず全文を返す */
+  noTruncateDescription?: boolean
+}
+
+/** エージェント向け: id/self を落とし、空フィールド省略、説明は切り詰め（--full で抑止可） */
+export function slimIssue(
+  i: IssueSummary,
+  opts: SlimIssueOptions = {},
+): Record<string, unknown> {
   const o: Record<string, unknown> = {
     key: i.key,
     summary: i.summary,
@@ -35,13 +43,29 @@ export function slimIssue(i: IssueSummary): Record<string, unknown> {
   if (i.duedate) o.duedate = i.duedate
   if (i.parent) o.parent = i.parent
   const d = i.description?.trim()
-  if (d) o.description = truncateText(d, DESC_MAX)
+  if (d) o.description = opts.noTruncateDescription ? d : truncateText(d, DESC_MAX)
+  if (i.renderedDescription) o.renderedDescription = i.renderedDescription
+  if (i.attachments?.length) {
+    o.attachments = i.attachments.map((a) => ({
+      id: a.id,
+      name: a.filename,
+      size: a.size,
+      mime: a.mimeType || undefined,
+      url: a.content,
+      ...(a.created ? { t: a.created } : {}),
+      ...(a.author ? { a: a.author } : {}),
+    }))
+  }
   return o
 }
 
-export function slimIssueEnvelope(issue: IssueSummary, compact: boolean) {
+export function slimIssueEnvelope(
+  issue: IssueSummary,
+  compact: boolean,
+  opts: SlimIssueOptions = {},
+) {
   if (!compact) return { issue }
-  return { issue: slimIssue(issue) }
+  return { issue: slimIssue(issue, opts) }
 }
 
 export function slimSearch(
@@ -60,7 +84,7 @@ export function slimSearch(
     ...(data.isLast !== undefined ? { last: data.isLast } : {}),
     ...(data.nextPageToken ? { next: data.nextPageToken } : {}),
     /** issues（短縮キー i） */
-    i: data.issues.map(slimIssue),
+    i: data.issues.map((x) => slimIssue(x)),
   }
 }
 

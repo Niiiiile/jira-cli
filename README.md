@@ -21,6 +21,7 @@
 * [Credential precedence](#credential-precedence)
 * [Usage](#usage)
   + [Show an issue](#show-an-issue)
+  + [Attachments](#attachments)
   + [Search issues](#search-issues)
   + [Create an issue](#create-an-issue)
   + [Update an issue](#update-an-issue)
@@ -41,6 +42,8 @@
 ## Features
 
 - 課題の取得・検索（JQL 対応）・作成・更新
+- 添付ファイル一覧の取得 / メタデータ取得 / ダウンロード（`attachment get` / `attachment download`）
+- `show` / `issue get` の `--full`（description を切り詰めない）/ `--rendered`（HTML レンダリング済み description 付き）
 - ステータス遷移（`issue transitions` / `issue transition`）
 - コメントの取得・追加
 - ユーザー検索（メンション用 accountId の確認）
@@ -153,9 +156,41 @@ npx @niiiiiiile/iw-jira-cli@latest show PROJECT-123
 
 # URL でも指定可
 npx @niiiiiiile/iw-jira-cli@latest show https://your-company.atlassian.net/browse/PROJECT-123
+
+# コンパクト出力時も description を切り詰めない
+iw-jira-cli show PROJECT-123 --full
+
+# 添付 + HTML レンダリング済み description も取得
+iw-jira-cli show PROJECT-123 --full --rendered
 ```
 
 グローバルインストール済みの場合は `iw-jira-cli` コマンドとして呼び出せます。
+
+出力には常に添付ファイル一覧（`attachments[]`）が含まれます（`id`/`name`/`size`/`mime`/`url` など）。
+`--rendered` を付けると Jira の `expand=renderedFields` が有効になり、
+HTML にレンダリング済みの説明文が `renderedDescription` として追加されます。
+
+### Attachments
+
+添付ファイルのメタデータ取得・ダウンロード:
+
+```bash
+# メタデータ取得
+iw-jira-cli attachment get 24486
+
+# テキスト系（markdown / text / json / yaml / ...）は標準出力へ
+iw-jira-cli attachment download 24486 > report.md
+
+# 明示的に標準出力
+iw-jira-cli attachment download 24486 --out -
+
+# ファイルに保存（バイナリはこちら必須）
+iw-jira-cli attachment download 24486 --out ./downloads/
+iw-jira-cli attachment download 24486 --out ./report.md --force
+```
+
+ディレクトリを `--out` に指定すると、サーバー側の `Content-Disposition` から
+ファイル名を推測して保存します。既存ファイルの上書きは `--force` が必要です。
 
 ### Search issues
 

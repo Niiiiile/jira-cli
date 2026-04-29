@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Cli, z } from 'incur'
 import { slimIssueEnvelope, slimMyself } from './agent-compact.js'
+import { attachmentCli } from './attachment-cli.js'
 import { bootstrapCli } from './bootstrap.js'
 import { DEFAULT_PROFILE_NAME, readConfig, resolveCredentials, writeConfig } from './config.js'
 import { jiraRequest } from './jira-client.js'
@@ -33,7 +34,7 @@ async function loadMyself(
 Cli.create('iw-jira-cli', {
   description:
     'Jira Cloud REST API v3 用 CLI。setup/profile、キー／URL、メンション（@[accountId] / @[email:...]）、JIRA_CLI_COMPACT 対応。出力は TOON（--format jsonl で NDJSON に切替）',
-  version: '0.5.0',
+  version: '0.6.0',
   format: 'toon',
 })
   .command('show', {
@@ -41,11 +42,27 @@ Cli.create('iw-jira-cli', {
     args: z.object({
       ref: z.string().describe('WEC-41 または .../browse/WEC-41 等'),
     }),
-    options: authOptions,
+    options: z.object({
+      full: z
+        .boolean()
+        .optional()
+        .describe('description を切り詰めず全文を返す（コンパクト出力時のみ関係）'),
+      rendered: z
+        .boolean()
+        .optional()
+        .describe('expand=renderedFields を付けて HTML レンダリング済み description も取得'),
+      ...authOptions.shape,
+    }),
     output: z.any(),
     async run(c) {
-      const full = await loadIssueSummary(resolveCredentials(c.options), c.args.ref)
-      return finalizeCompactOutput(c, full.issue, (issue) => slimIssueEnvelope(issue, true))
+      const full = await loadIssueSummary(
+        resolveCredentials(c.options),
+        c.args.ref,
+        { rendered: c.options.rendered },
+      )
+      return finalizeCompactOutput(c, full.issue, (issue) =>
+        slimIssueEnvelope(issue, true, { noTruncateDescription: c.options.full }),
+      )
     },
   })
   .command('setup', {
@@ -81,6 +98,7 @@ Cli.create('iw-jira-cli', {
     },
   })
   .command(issueCli)
+  .command(attachmentCli)
   .command(projectCli)
   .command(profileCli)
   .command(userCli)

@@ -50,15 +50,19 @@ async function resolveAssigneeAccountId(
 export async function loadIssueSummary(
   env: JiraCredentials,
   ref: string,
+  opts: { rendered?: boolean } = {},
 ): Promise<{ issue: IssueSummary }> {
   const key = parseIssueKey(ref)
   const fields = [...ISSUE_DETAIL_FIELDS].join(',')
+  const qs = new URLSearchParams({ fields })
+  if (opts.rendered) qs.set('expand', 'renderedFields')
   const raw = await jiraRequest<{
     key: string
     id: string
     self: string
     fields?: Record<string, unknown>
-  }>(env, `/issue/${encodeURIComponent(key)}?fields=${encodeURIComponent(fields)}`)
+    renderedFields?: { description?: string | null }
+  }>(env, `/issue/${encodeURIComponent(key)}?${qs.toString()}`)
   return { issue: toIssueSummary(raw) }
 }
 
@@ -89,11 +93,27 @@ export const issueCli = Cli.create('issue', {
         .string()
         .describe('課題キー（WEC-41）または URL（.../browse/WEC-41、selectedIssue= 付きボード URL 等）'),
     }),
-    options: authOptions,
+    options: z.object({
+      full: z
+        .boolean()
+        .optional()
+        .describe('description を切り詰めず全文を返す（コンパクト出力時のみ関係）'),
+      rendered: z
+        .boolean()
+        .optional()
+        .describe('expand=renderedFields を付けて HTML レンダリング済み description も取得'),
+      ...authOptions.shape,
+    }),
     output: z.any(),
     async run(c) {
-      const full = await loadIssueSummary(resolveCredentials(c.options), c.args.ref)
-      return finalizeCompactOutput(c, full.issue, (issue) => slimIssueEnvelope(issue, true))
+      const full = await loadIssueSummary(
+        resolveCredentials(c.options),
+        c.args.ref,
+        { rendered: c.options.rendered },
+      )
+      return finalizeCompactOutput(c, full.issue, (issue) =>
+        slimIssueEnvelope(issue, true, { noTruncateDescription: c.options.full }),
+      )
     },
   })
   .command('search', {
