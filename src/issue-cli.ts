@@ -3,7 +3,13 @@ import { adfToMarkdown } from './adf.js'
 import { descriptionToAdf } from './adf-mentions.js'
 import { resolveCredentials, type JiraCredentials } from './config.js'
 import { ISSUE_DETAIL_FIELDS, ISSUE_LIST_FIELDS } from './issue-fields.js'
-import { jiraRequest, toIssueSummary, type IssueSummary } from './jira-client.js'
+import {
+  jiraRequest,
+  jiraRequestV2,
+  toIssueSummary,
+  type IssueSummary,
+} from './jira-client.js'
+import { resolveJiraWikiMentions } from './md-to-jira-wiki.js'
 import {
   slimComments,
   slimCreate,
@@ -515,7 +521,7 @@ export const issueCli = Cli.create('issue', {
     },
   })
   .command('comment', {
-    description: 'コメントを追加（メンション: @[accountId] または @[email:...]）',
+    description: 'コメントを追加（Jira Wiki Renderer 記法。メンション: @[accountId] または @[email:...]）',
     args: z.object({
       ref: z.string().describe('課題キーまたは URL'),
     }),
@@ -527,8 +533,8 @@ export const issueCli = Cli.create('issue', {
     async run(c) {
       const key = parseIssueKey(c.args.ref)
       const creds = resolveCredentials(c.options)
-      const body = await descriptionToAdf(creds, c.options.body)
-      const created = await jiraRequest<{ id: string; self: string }>(
+      const body = await resolveJiraWikiMentions(c.options.body, creds)
+      const created = await jiraRequestV2<{ id: string; self: string }>(
         creds,
         `/issue/${encodeURIComponent(key)}/comment`,
         {

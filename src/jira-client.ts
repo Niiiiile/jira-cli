@@ -24,8 +24,25 @@ export async function jiraRequest<T = unknown>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
+  return jiraRequestApi<T>(env, 3, path, init)
+}
+
+export async function jiraRequestV2<T = unknown>(
+  env: JiraCredentials,
+  path: string,
+  init?: RequestInit,
+): Promise<T> {
+  return jiraRequestApi<T>(env, 2, path, init)
+}
+
+async function jiraRequestApi<T = unknown>(
+  env: JiraCredentials,
+  apiVersion: 2 | 3,
+  path: string,
+  init?: RequestInit,
+): Promise<T> {
   const base = normalizeJiraBaseUrl(env.host)
-  const url = `${base}/rest/api/3${path.startsWith('/') ? path : `/${path}`}`
+  const url = `${base}/rest/api/${apiVersion}${path.startsWith('/') ? path : `/${path}`}`
   const token = Buffer.from(`${env.email}:${env.apiToken}`).toString('base64')
   const headers = new Headers(init?.headers)
   headers.set('Authorization', `Basic ${token}`)

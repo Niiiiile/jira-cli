@@ -29,7 +29,7 @@
   + [User search](#user-search)
   + [Project list](#project-list)
 * [Output format](#output-format)
-* [Markdown support](#markdown-support)
+* [Formatting support](#formatting-support)
 * [Mention syntax](#mention-syntax)
 * [Development](#development)
 * [License](#license)
@@ -250,39 +250,44 @@ JIRA_CLI_COMPACT=1 iw-jira-cli issue search PROJECT
 JIRA_CLI_COMPACT=0 iw-jira-cli issue search PROJECT
 ```
 
-## Markdown support
+## Formatting support
 
-`issue create` / `issue update` の `--description`、`issue comment` の `--body` は **Markdown として解釈**され、Jira の ADF（Atlassian Document Format）に変換されて投稿されます。`issue get` / `show` / `issue comments` で取得した description / コメントは逆に ADF から Markdown に変換されて出力されるため、Jira Web UI とターミナル双方で書式が保たれます。
+`issue create` / `issue update` の `--description` は **Markdown として解釈**され、Jira の ADF（Atlassian Document Format）に変換されて投稿されます。`issue get` / `show` / `issue comments` で取得した description / コメントは ADF から Markdown に変換して出力します。
 
-対応している記法:
+`issue comment` の `--body` は **Jira Wiki Renderer 記法をそのまま投稿**します。Markdown 変換は行いません。Jira の Wiki Renderer Help にある表、パネル、コードブロック、noformat、color、リンク、画像、添付、引用、リストなどの記法をそのまま使用できます。
 
-| 記法 | 例 |
-|------|------|
-| 見出し | `# H1`, `## H2`, ... `###### H6` |
-| 太字 / 斜体 | `**bold**`, `*italic*`, `__bold__`, `_italic_` |
-| 取り消し線 | `~~strike~~` |
-| 行内コード | `` `code` `` |
-| コードブロック | ` ```ts ` ... ` ``` ` |
-| 箇条書き | `- item` / `* item` |
-| 番号付きリスト | `1. item` |
-| チェックリスト | `- [ ] todo` / `- [x] done` |
-| 引用 | `> quote` |
-| 水平線 | `---` / `***` / `___` |
-| リンク | `[text](https://example.com)` |
-| 画像 | `![alt](https://example.com/img.png)`（リンクとして挿入） |
-| メンション | `@[accountId]` / `@[email:user@example.com]` |
+代表的な Jira Wiki Renderer 記法:
+
+| 用途 | Jira Wiki Renderer 記法 |
+|------|--------------------------|
+| 見出し | `h2. Heading` |
+| 太字 / 斜体 | `*bold*`, `_italic_` |
+| 行内コード | `{{code}}` |
+| コードブロック | `{code:js}` ... `{code}` |
+| noformat | `{noformat}` ... `{noformat}` |
+| パネル | `{panel:title=Title}` ... `{panel}` |
+| 色 | `{color:red}` ... `{color}` |
+| 表 | `||heading 1||heading 2||` / `|cell 1|cell 2|` |
+| リンク | `[text|https://example.com]` |
+| 画像 | `!attached-image.png!` / `!https://example.com/image.png!` |
+| メンション | `@[accountId]` / `@[email:user@example.com]`（投稿時に `[~accountid:...]` へ解決） |
 
 ```bash
 iw-jira-cli issue comment PROJECT-123 --body "$(cat <<'EOF'
-## 調査結果
+h2. 調査結果
 
-- **影響範囲**: `UserController`
-- 修正方針は [PR #42](https://github.com/org/repo/pull/42) を参照
-- @[email:reviewer@example.com] レビューお願いします
+{panel:title=影響範囲}
+* 対象: {{UserController}}
+* 参照: [PR #42|https://github.com/org/repo/pull/42]
+{panel}
 
-```bash
+||項目||結果||
+|テスト|成功|
+|確認者|@[email:reviewer@example.com]|
+
+{code:bash}
 php artisan test --filter UserControllerTest
-```
+{code}
 EOF
 )"
 ```
